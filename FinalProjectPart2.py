@@ -1,8 +1,6 @@
 # Srijana Shrestha
 # 1918305
 
-# Srijana Shrestha
-# 1918305
 import csv
 import datetime
 
@@ -189,7 +187,9 @@ with open('damageInventory.csv', 'w') as new_file:
     for i in range(0, len(damaged_item)):
         damageInventory_write.writerow(damaged_item[i])
 
-###################################################################################
+#######################################################################################################################
+'''create an empty list for manufacturers name and item type and fill out the manufacturers name and type from items 
+    dictionary'''
 final_types = []
 final_manufacturers = []
 for item in items:
@@ -201,20 +201,17 @@ for item in items:
     if listed_manufacturer not in final_manufacturers:
         final_manufacturers.append(listed_manufacturer)
 
-
-print(final_types)
-print(final_manufacturers)
-print(items)
-
+''' ask the user for input as manufacturer name and item type or 'q' to quit'''
 user_input = None
 while user_input != 'q':
     user_input = input("\nPlease enter a manufacturer name and item type or type 'q' to quit:\n")
 
+    '''apply if else condition check whether the user input are in the final manufacturers and final type list'''
     if user_input == 'q':
         break
     else:
-        input_manufacturer = None
-        input_types = None
+        input_manufacturer = ''
+        input_types = ''
         user_input = user_input.split()
 
         false_input = False
@@ -224,36 +221,52 @@ while user_input != 'q':
                     false_input = True
                 else:
                     input_manufacturer = word
-                    print(input_manufacturer)
+
             elif word in final_types:
                 if input_types:
                     false_input = True
                 else:
                     input_types = word
-                    print(input_types)
+        '''apply condition to print message if the user inputs are not in the lists'''
         if not input_manufacturer or not input_types or false_input:
             print("No such item in inventory")
 
         else:
-            values = sorted(items.keys(), key=lambda x: items[x]['price'], reverse=True)
+            '''sort the key (item id) of items dictionary based on its prices in descending order and assigned into 
+            values list'''
+            values = sorted(items.keys(), key=lambda x: int(items[x]['price']), reverse=True)
 
+            '''create a matched items list to fill the matching items and similar item dictionary to to fill up 
+            similar items'''
             matched_items = []
             similar_items = {}
 
             for item in values:
                 if items[item]['item_type'] == input_types:
+                    # importing the current day
                     current_day = datetime.date.today()
                     service_date = items[item]['service_date']
+
+                    # check the service date of given item and get month/day/year format
                     service_expiration = datetime.datetime.strptime(service_date, "%m/%d/%Y").date()
+
+                    '''apply the condition to check if the item is not expired, same type but different manufacturer and 
+                    not damaged and then append the value into matched items list and similar items dictionary'''
+
+                    g_manufacturers = items[item]['manufacturer']
                     expired = service_expiration < current_date
-                    if items[item]['manufacturer'] == input_manufacturer:
-                        if not expired and not items[item]['damaged']:
+                    n_damaged = items[item]['damaged']
+
+                    if g_manufacturers == input_manufacturer:
+                        if not expired and not n_damaged:
                             matched_items.append((item, items[item]))
                     else:
-                        if not expired and not items[item]['damaged']:
+                        if not expired and not n_damaged:
                             similar_items[item] = items[item]
 
+            '''if there is any matched items then print the matched items item id, manufacturer name and price'''
             if matched_items:
+
                 item = matched_items[0]
                 item_id = item[0]
                 manufacturer_name = item[1]['manufacturer']
@@ -262,32 +275,35 @@ while user_input != 'q':
 
                 print('Your item is:', item_id, ',', manufacturer_name, ',', item_type, ',', '$' + price)
 
+                '''check if there is any similar item with different manufacturers with nearest price then print the
+                message with its item id, manufacturer name, type and price'''
+
                 if similar_items:
 
-                    closest_item = None
-                    nearest_price_dif = None
+                    closest_item = ''
+                    nearest_price_dif = ''
                     matched_price = price
 
                     for item in similar_items:
-                        if nearest_price_dif is None:
-                            closest_item = similar_items[item]
-                            nearest_price_dif = abs(int(matched_price) - int(similar_items[item]['price']))
+                        if nearest_price_dif is '':
                             item_id = item
+                            closest_item = similar_items[item]
                             manufacturer_name = similar_items[item]['manufacturer']
                             item_type = similar_items[item]['item_type']
                             price = similar_items[item]['price']
 
-                        price_difference = abs(int(matched_price) - int(price))
-                        if nearest_price_dif > price_difference :
+                        nearest_price_dif = (int(matched_price) - int(price))
+                        price_difference = (int(matched_price) - int(price))
+
+                        if abs(nearest_price_dif) < abs(price_difference):
                             closest_item = item
-                            nearest_price_dif = price_difference
                             item_id = item
                             manufacturer_name = similar_items[item]['manufacturer']
                             item_type = similar_items[item]['item_type']
                             price = similar_items[item]['price']
+                            nearest_price_dif = price_difference
 
                     print("You may, also, consider:", item_id, ",", manufacturer_name, ",", item_type, ",", "$"+price)
-            else:
-                print("No such item in inventory")
+
 csv_file.close()
 new_file.close()
